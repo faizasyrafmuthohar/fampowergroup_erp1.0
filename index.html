@@ -2179,7 +2179,9 @@ function OpexPage() {
 const PRODUK_JENIS = ["Gilingan PET", "PET Press", "Tutup Botol", "Emberan", "Reject", "Lainnya"];
 const produksiDataInit = [];
 function ProduksiPage({ onProduksi }) {
-    useEffect(() => { dbLoad('produksi', d => setData(d)); }, []);
+    useEffect(() => {
+        dbLoad('produksi', d => setData(d.map(r => (Object.assign(Object.assign({}, r), { jenisBB: r.jenisBB || r.jenis_bb || '', bbMasuk: r.bbMasuk != null ? r.bbMasuk : (r.bb_masuk != null ? Number(r.bb_masuk) : 0), hasilKg: r.hasilKg != null ? r.hasilKg : (r.hasil_kg != null ? Number(r.hasil_kg) : 0), susut: r.susut != null ? r.susut : 0, limbahTutupBotol: r.limbahTutupBotol != null ? r.limbahTutupBotol : (r.limbah_tutup || 0), limbahEmberan: r.limbahEmberan != null ? r.limbahEmberan : (r.limbah_emberan || 0), limbahReject: r.limbahReject != null ? r.limbahReject : (r.limbah_reject || 0), mesin: r.mesin || '', operator: r.operator || '' })))));
+    }, []);
     const PRODUK_JADI_LIST = ["Gilingan PET", "PET Press"];
     const LIMBAH_LIST = ["Tutup Botol", "Emberan", "Reject"];
     const [data, setData] = useState(produksiDataInit);
@@ -2195,7 +2197,7 @@ function ProduksiPage({ onProduksi }) {
     const [form, setForm] = useState(emptyForm);
     const openAdd = () => { setForm(emptyForm); setEditId(null); setModalOpen(true); };
     const __openEditProduksi = row => {
-        setForm({ tgl: row.tgl, jenisBB: row.jenisBB, bbMasuk: String(row.bbMasuk), produk: row.produk, hasilKg: String(row.hasilKg),
+        setForm({ tgl: row.tgl, jenisBB: row.jenisBB || row.jenis_bb || '', bbMasuk: String(row.bbMasuk || row.bb_masuk || ''), produk: row.produk, hasilKg: String(row.hasilKg || row.hasil_kg || ''),
             mesin: row.mesin, operator: row.operator, catatan: row.catatan,
             limbahTutupBotol: String(row.limbahTutupBotol || ""), limbahEmberan: String(row.limbahEmberan || ""), limbahReject: String(row.limbahReject || "") });
         setEditId(row.id);
@@ -6354,23 +6356,14 @@ function App() {
     const PRODUK_JADI = ["Gilingan PET", "PET Press"]; // potong sharedStok
     const PRODUK_LIMBAH = ["Tutup Botol", "Emberan", "Reject"]; // potong sharedStokLimbah
     // ── Inisialisasi stok dari seed data ──
-    const _initStok = (() => {
-        // Produk jadi: Gilingan + Press
-        const s = { "Gilingan PET": 0, "PET Press": 0 };
-        produksiDataInit.forEach(r => {
-            if (PRODUK_JADI.includes(r.produk))
-                s[r.produk] = (s[r.produk] || 0) + r.hasilKg;
-        });
-        return s;
-    })();
+    const _initStok = { "Gilingan PET": 0, "PET Press": 0 }; // loaded from DB on mount
     const _initStokLimbah = (() => {
         // Limbah: Tutup Botol, Emberan, Reject — dari seed stok hardcoded
-        return { "Tutup Botol": 3100, "Emberan": 1800, "Reject": 420 };
+        return { "Tutup Botol": 0, "PET Press": 0, "Emberan": 0, "Reject": 0 };
     })();
-    const _initStokBB = Math.max(0, BB_INIT.reduce((s, r) => s + r.items.reduce((ss, i) => ss + i.kg, 0), 0) -
-        produksiDataInit.reduce((s, r) => s + r.bbMasuk, 0));
-    const _initBBMasuk = BB_INIT.reduce((s, r) => s + r.items.reduce((ss, i) => ss + i.kg, 0), 0);
-    const _initTerjual = penjualanList.reduce((s, r) => s + r.kg, 0);
+    const _initStokBB = 0;
+    const _initBBMasuk = 0;
+    const _initTerjual = 0;
     const [sharedStok, setSharedStok] = useState(_initStok);
     const [sharedStokLimbah, setSharedStokLimbah] = useState(_initStokLimbah);
     const [sharedStokBB, setSharedStokBB] = useState(_initStokBB);
@@ -6458,9 +6451,23 @@ function App() {
         produksi: React.createElement(ProduksiPage, { onProduksi: updateStokProduksi }),
         penjualan: React.createElement(PenjualanPage, { onJual: updateStokJual }),
         stok: React.createElement(StokPage, { stokData: sharedStok, stokBB: sharedStokBB, stokLimbah: sharedStokLimbah, stokLogExtra: sharedStokLog, onRefresh: () => {
-                dbLoad('produksi', d => { let s = {}; let sl = {}; let sb = 0; d.forEach(r => { if (PRODUK_JADI.includes(r.produk))
-                    s[r.produk] = (s[r.produk] || 0) + (r.hasil_kg || r.hasilKg || 0); PRODUK_LIMBAH.forEach(lj => { if (r['limbah_' + lj.toLowerCase().replace(' ', '_')] || r['limbah' + lj.replace(' ', '')])
-                    sl[lj] = (sl[lj] || 0) + (r['limbah_' + lj.toLowerCase().replace(' ', '_')] || 0); }); }); setSharedStok(s); setSharedStokLimbah(sl); });
+                dbLoad('produksi', d => {
+                    const s = { "Gilingan PET": 0, "PET Press": 0 };
+                    const sl = { "Tutup Botol": 0, "Emberan": 0, "Reject": 0 };
+                    d.forEach(r => {
+                        const hasil = Number(r.hasil_kg || r.hasilKg || 0);
+                        const tutup = Number(r.limbah_tutup || r.limbahTutupBotol || 0);
+                        const emberan = Number(r.limbah_emberan || r.limbahEmberan || 0);
+                        const reject = Number(r.limbah_reject || r.limbahReject || 0);
+                        if (PRODUK_JADI.includes(r.produk))
+                            s[r.produk] = (s[r.produk] || 0) + hasil;
+                        sl["Tutup Botol"] = (sl["Tutup Botol"] || 0) + tutup;
+                        sl["Emberan"] = (sl["Emberan"] || 0) + emberan;
+                        sl["Reject"] = (sl["Reject"] || 0) + reject;
+                    });
+                    setSharedStok(Object.assign({}, s));
+                    setSharedStokLimbah(Object.assign({}, sl));
+                });
                 dbLoad('bahan_baku', d => { const kg = d.reduce((s, r) => s + ((r.items || []).reduce((ss, it) => ss + (it.kg || 0), 0)), 0); setSharedStokBB(kb => kb); });
             } }),
         finance: React.createElement(FinancePage, { role: user.role, budgetMingguan: budgetMingguan, setBudgetMingguan: setBudgetMingguan, sharedSaldo: sharedSaldo, setSharedSaldo: setSharedSaldo, sharedTransaksi: sharedTransaksi, setSharedTransaksi: setSharedTransaksi }),
