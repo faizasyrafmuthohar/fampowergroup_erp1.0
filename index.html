@@ -1484,7 +1484,9 @@ function SupplierPage() {
     const emptySup = { nama: "", noHp: "", alamat: "", bank: "", noRekening: "", anRekening: "", keterangan: "" };
     const [supForm, setSupForm] = useState(emptySup);
     const [search, setSearch] = useState("");
-    useEffect(() => { dbLoad('suppliers', setSuppliers); }, []);
+    useEffect(() => {
+        dbLoad('suppliers', d => setSuppliers(d.map(s => (Object.assign(Object.assign({}, s), { noHp: s.noHp || s.kontak || '', alamat: s.alamat || s.kota || '', bank: s.bank || '', noRekening: s.noRekening || '', anRekening: s.anRekening || '' })))));
+    }, []);
     const openAdd = () => { setSupForm(emptySup); setSupEditId(null); setSupModal(true); };
     const openEdit = s => guard(() => { setSupForm({ nama: s.nama, noHp: s.noHp || "", alamat: s.alamat || s.kota || "", bank: s.bank || "", noRekening: s.noRekening || "", anRekening: s.anRekening || "", keterangan: s.keterangan || "" }); setSupEditId(s.id); setSupModal(true); }, "edit");
     const saveSup = () => {
@@ -1495,7 +1497,8 @@ function SupplierPage() {
         dbUpsert('suppliers', { id: row.id, nama: row.nama, kontak: row.noHp || "", kota: row.alamat || "", keterangan: `Bank: ${row.bank || "-"} | Rek: ${row.noRekening || "-"} | AN: ${row.anRekening || "-"}` });
         setSupModal(false);
     };
-    const removeSup = id => guard(() => { setSuppliers(d => d.filter(r => r.id !== id)); dbDelete('suppliers', id); }, "delete");
+    const removeSup = id => guard(() => { const s = suppliers.find(r => r.id === id); if (s)
+        addToTrash(s, 'Supplier', s.nama || id); setSuppliers(d => d.filter(r => r.id !== id)); dbDelete('suppliers', id); }, "delete");
     const filtered = suppliers.filter(s => (s.nama || "").toLowerCase().includes(search.toLowerCase()));
     return (React.createElement("div", null,
         React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 } },
@@ -5426,13 +5429,21 @@ function AkunPage({ currentUser }) {
             return;
         const rowId = editId || uid();
         if (!editId) {
-            // Akun baru: daftar ke Supabase Auth dulu
+            // Akun baru: daftar ke Supabase Auth
             const db = getDB();
             if (db) {
-                const { error: signUpErr } = await db.auth.signUp({ email: form.email, password: form.password });
+                const { data: signUpData, error: signUpErr } = await db.auth.signUp({
+                    email: form.email,
+                    password: form.password,
+                    options: { emailRedirectTo: undefined }
+                });
                 if (signUpErr && !signUpErr.message.includes('already registered')) {
                     alert("Gagal buat akun: " + signUpErr.message);
                     return;
+                }
+                // Supabase mungkin butuh konfirmasi email - beritahu direktur
+                if ((signUpData === null || signUpData === void 0 ? void 0 : signUpData.user) && !signUpData.session) {
+                    alert(`✅ Akun "${form.email}" berhasil dibuat!\n\n⚠️ Penting: Supabase membutuhkan konfirmasi email. Pergi ke Supabase Dashboard → Authentication → Settings → matikan "Enable email confirmations" agar akun bisa langsung login.`);
                 }
             }
         }
@@ -6127,6 +6138,7 @@ function TrashPage() {
         "Absensi": "absensi", "Bahan Baku": "bahan_baku", "Pengeluaran": "opex",
         "Produksi": "produksi", "Penjualan": "penjualan", "Karyawan": "karyawan",
         "Aset": "aset", "Maintenance": "maintenance", "Purchase Order": "po_masuk",
+        "Supplier": "suppliers",
     };
     // Per-table column whitelist to avoid sending wrong fields to DB
     const cleanForDB = (sourcePage, row) => {
@@ -6153,6 +6165,8 @@ function TrashPage() {
                 return { _tbl: "po_keluar", id: restoreId, no_po: r.id, tgl: r.tgl, supplier: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
             return { _tbl: "po_masuk", id: restoreId, no_po: r.id, tgl: r.tgl, buyer: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
         }
+        if (sourcePage === "Supplier")
+            return { id: r.id, nama: r.nama, kontak: r.noHp || r.kontak || "", kota: r.alamat || r.kota || "", keterangan: r.keterangan || "" };
         return r; // fallback: send as-is
     };
     const doRestore = (trashId) => {
