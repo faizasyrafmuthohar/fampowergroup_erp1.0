@@ -4,7 +4,7 @@
 </head><body>
 <div id="loading"><div class="spinner"></div><div style="color:#a7f3d0;font-size:15px;">Memuat Fam Power Group ERP v1.0...</div></div>
 <div id="root"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
 <script>
 window.__db_url='https://xxnbeshaafzdxingsvvf.supabase.co';
 window.__db_key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4bmJlc2hhYWZ6ZHhpbmdzdnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjUwMTMsImV4cCI6MjA5MDI0MTAxM30.WZbRnOrhSsQrWrOLAz79k9d4p058RX1AMCrH8NlEj3w';
@@ -16,10 +16,10 @@ window.db=supabase.createClient(window.__db_url,window.__db_key);
 <script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
-<script>
-window.onerror=function(msg,src,line){document.getElementById('loading').innerHTML='<div style="color:#fca5a5;font-family:monospace;padding:24px;"><b>Error:</b><br>'+msg+'<br><small>'+src+':'+line+'</small></div>';return false;};
+<script crossorigin="anonymous">
+try {
 const { useState, useMemo, useEffect } = React;
-const { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } = Recharts;
+const { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine, Legend } = Recharts;
 
 // ── Inline SVG Icon Components ──
 const LayoutDashboard = ({size=24,color="currentColor",style,...rest}) =>
@@ -196,14 +196,17 @@ var __rest = (this && this.__rest) || function (s, e) {
             if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
                 t[p[i]] = s[p[i]];
         }
+    return t;
 };
+LayoutDashboard, Users, Package, Factory, ShoppingCart, Wallet,
+    FileBarChart, LogOut, TrendingUp, TrendingDown, AlertCircle, CheckCircle,
+    Plus, Search, Bell, Building2, Truck, Layers, Wrench, UserCheck,
+    ChevronDown, Eye, EyeOff, ArrowUpRight, ArrowDownRight,
     Filter, Download, Edit2, Trash2, Boxes, ListOrdered, Star, X, Check,
     Calendar, BarChart2, FileText, Activity, Clock, LayoutList;
 AreaChart, Area, BarChart, Bar, LineChart, Line,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, ReferenceLine, Legend;
-from;
-"recharts";
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG & HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -741,10 +744,11 @@ function LoginPage({ onLogin }) {
             React.createElement("div", { style: { textAlign: "center", marginBottom: 32 } },
                 React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: 16 } },
                     React.createElement(FPGLogoFull, null)),
-                React.createElement("p", { style: { color: "#a7f3d0", fontSize: 14, margin: 0 } }, "ERP v1.0")),
+                React.createElement("p", { style: { color: "#a7f3d0", fontSize: 14, margin: "0 0 10px" } }, "Enterprise Resource Planning v1.0"),
+                React.createElement("p", { style: { color: "#6ee7b7", fontSize: 12, margin: 0, fontStyle: "italic", letterSpacing: .5 } }, "Powering a Better Tomorrow")),
             React.createElement("div", { style: { background: "#fff", borderRadius: 16, padding: 32, boxShadow: "0 24px 48px rgba(0,0,0,0.3)" } },
                 React.createElement("h2", { style: { fontSize: 20, fontWeight: 700, color: C.text, margin: "0 0 6px" } }, "Masuk ke Sistem"),
-                React.createElement("p", { style: { fontSize: 13, color: C.muted, margin: "0 0 24px" } }, "Fam Power Group ERP v1.0"),
+                React.createElement("p", { style: { fontSize: 13, color: C.muted, margin: "0 0 24px" } }, "Fam Power Group \u00B7 Enterprise Resource Planning v1.0"),
                 error && React.createElement("div", { style: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#b91c1c" } }, error),
                 React.createElement("div", { style: { marginBottom: 16 } },
                     React.createElement("label", { style: { fontSize: 13, fontWeight: 600, color: C.text, display: "block", marginBottom: 8 } }, "Email"),
@@ -3240,8 +3244,8 @@ function POPage() {
     const [dataMasuk, setDataMasuk] = useState(poMasukList);
     const [dataKeluar, setDataKeluar] = useState(poKeluarList);
     useEffect(() => {
-        dbLoad('po_masuk', d => setDataMasuk(d.map(r => (Object.assign(Object.assign({}, r), { pihak: r.pihak || r.buyer || r.supplier || '', id: r.no_po || r.id, realisasiKg: r.realisasi_kg || 0 })))));
-        dbLoad('po_keluar', d => setDataKeluar(d.map(r => (Object.assign(Object.assign({}, r), { pihak: r.pihak || r.supplier || r.buyer || '', id: r.no_po || r.id, realisasiKg: r.realisasi_kg || 0 })))));
+        dbLoad('po_masuk', d => setDataMasuk(d.map(r => (Object.assign(Object.assign({}, r), { jenis: 'masuk', pihak: r.pihak || r.buyer || r.supplier || '', id: r.no_po || r.id, realisasiKg: r.realisasi_kg || 0 })))));
+        dbLoad('po_keluar', d => setDataKeluar(d.map(r => (Object.assign(Object.assign({}, r), { jenis: 'keluar', pihak: r.pihak || r.supplier || r.buyer || '', id: r.no_po || r.id, realisasiKg: r.realisasi_kg || 0 })))));
     }, []);
     const [activeTab, setActiveTab] = useState("masuk"); // masuk | keluar | history
     const [modalOpen, setModalOpen] = useState(false);
@@ -4382,7 +4386,22 @@ function KwitansiPage() {
     const [exporting, setExporting] = useState(false);
     // ── Master Supplier — load dari DB (sama dengan BahanBaku) ──
     const [suppliers, setSuppliers] = useState([]);
-    useEffect(() => { dbLoad('suppliers', setSuppliers); }, []);
+    useEffect(() => {
+        dbLoad('suppliers', setSuppliers);
+        // Load kwitansi history dari DB
+        const db = getDB();
+        if (!db)
+            return;
+        db.from('kwitansi').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+            if (data)
+                setHistory(data.map(r => { try {
+                    return Object.assign(Object.assign({}, JSON.parse(r.data || '{}')), { _histId: r.id });
+                }
+                catch (e) {
+                    return { _histId: r.id };
+                } }));
+        });
+    }, []);
     const [supModal, setSupModal] = useState(false);
     const [supEditId, setSupEditId] = useState(null);
     const emptySup = { nama: "", noHp: "", alamat: "", bank: "", noRekening: "", anRekening: "" };
@@ -4451,7 +4470,14 @@ function KwitansiPage() {
         setHistEditModal(false);
     };
     const _deleteHistory = (id) => {
+        const kw = history.find(k => k._histId === id);
+        if (kw)
+            addToTrash(kw, "Kwitansi", `${kw.noKwitansi || "Kwitansi"} - ${kw.namaSupplier || ""}`);
         setHistory(d => d.filter(kw => kw._histId !== id));
+        const db = getDB();
+        if (db)
+            db.from('kwitansi').delete().eq('id', id).then(({ error }) => { if (error)
+                console.warn('Kwitansi delete:', error.message); });
         setDeleteConfirm(null);
     };
     const deleteHistory = (id) => guard(() => _deleteHistory(id), "delete");
@@ -4499,8 +4525,14 @@ function KwitansiPage() {
     const saveKwitansi = () => {
         if (!form.namaSupplier)
             return;
-        const saved = Object.assign(Object.assign({}, form), { totals, totalTransfer, sisaDpBaru, savedAt: new Date().toLocaleString("id-ID"), _histId: uid() });
+        const hid = uid();
+        const saved = Object.assign(Object.assign({}, form), { totals, totalTransfer, sisaDpBaru, savedAt: new Date().toLocaleString("id-ID"), _histId: hid });
         setHistory(h => [saved, ...h]);
+        // Simpan ke DB tabel kwitansi
+        const db = getDB();
+        if (db)
+            db.from('kwitansi').upsert({ id: hid, data: JSON.stringify(saved) }).then(({ error }) => { if (error)
+                console.warn('Kwitansi save error:', error.message); });
         setShowForm(false);
         setShowPreview(saved);
         setForm(emptyForm);
@@ -5249,7 +5281,7 @@ function MaintenancePage({ asetData }) {
                                 React.createElement("div", { style: { display: "flex", gap: 5 } },
                                     React.createElement(Btn, { variant: "outline", size: "sm", onClick: () => openEditM(r) },
                                         React.createElement(Edit2, { size: 12 })),
-                                    React.createElement(Btn, { variant: "danger", size: "sm", onClick: () => guard(() => { setRecords(d => d.filter(x => x.id !== r.id)); dbDelete('maintenance', r.id); }, "delete") },
+                                    React.createElement(Btn, { variant: "danger", size: "sm", onClick: () => guard(() => { addToTrash(r, 'Maintenance', `${r.aset || ''} - ${fmtTgl(r.tgl)}`); setRecords(d => d.filter(x => x.id !== r.id)); dbDelete('maintenance', r.id); }, "delete") },
                                         React.createElement(Trash2, { size: 12 }))))));
                     })),
                     React.createElement("tfoot", null,
@@ -5383,7 +5415,7 @@ function AkunPage({ currentUser }) {
             return;
         const row = { id: editId || uid(), nama: form.nama, email: form.email, role: form.role, status: form.status, lastLogin: editId ? (_a = data.find(r => r.id === editId)) === null || _a === void 0 ? void 0 : _a.lastLogin : "Belum pernah login" };
         setData(d => editId ? d.map(r => r.id === editId ? row : r) : [row, ...d]);
-        dbUpsert('users', { id: row.id, nama: row.nama, email: row.email, role: row.role });
+        dbUpsert('users', { id: row.id, nama: row.nama, email: row.email, role: row.role, status: row.status || 'Aktif' });
         setModalOpen(false);
     };
     const toggleStatus = id => {
@@ -5440,10 +5472,7 @@ function AkunPage({ currentUser }) {
             React.createElement("div", { style: { fontSize: 24, fontWeight: 800, color: c } }, v),
             React.createElement("div", { style: { fontSize: 11, color: c, fontWeight: 600 } }, l))))),
         React.createElement("div", { style: { background: "#fef9ec", borderRadius: 10, padding: "12px 16px", marginBottom: 16, border: "1px solid #fde68a", display: "flex", gap: 10, alignItems: "flex-start" } },
-            React.createElement(AlertCircle, { size: 15, color: "#d97706", style: { flexShrink: 0, marginTop: 1 } }),
-            React.createElement("div", { style: { fontSize: 13, color: "#92400e" } },
-                React.createElement("strong", null, "Catatan Prototype:"),
-                " Perubahan akun di sini bersifat sementara (hilang saat refresh). Setelah hosting ke Supabase, akun akan tersimpan permanen di database dan email undangan akan terkirim otomatis ke pengguna baru.")),
+            React.createElement(AlertCircle, { size: 15, color: "#d97706", style: { flexShrink: 0, marginTop: 1 } })),
         React.createElement("div", { style: { background: C.surface, borderRadius: 12, border: `1px solid ${C.border}` } },
             React.createElement("div", { style: { padding: "1rem 1.2rem", borderBottom: `1px solid ${C.border}` } },
                 React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" } },
@@ -6072,13 +6101,40 @@ function TrashPage() {
         "Produksi": "produksi", "Penjualan": "penjualan", "Karyawan": "karyawan",
         "Aset": "aset", "Maintenance": "maintenance", "Purchase Order": "po_masuk",
     };
+    // Per-table column whitelist to avoid sending wrong fields to DB
+    const cleanForDB = (sourcePage, row) => {
+        const { _trashId, _sourcePage, _label, _deletedAt } = row, r = __rest(row, ["_trashId", "_sourcePage", "_label", "_deletedAt"]);
+        if (sourcePage === "Aset")
+            return { id: r.id, nama: r.nama, kategori: r.kategori, nilai: r.nilai, kondisi: r.kondisi, tgl_beli: r.tgl_beli || r.beli || null };
+        if (sourcePage === "Bahan Baku")
+            return { id: r.id, tgl: r.tgl, supplier: r.supplier || "", items: r.items || [], total_kg: r.total_kg || 0, total_harga: r.total_harga || 0 };
+        if (sourcePage === "Produksi")
+            return { id: r.id, tgl: r.tgl, jenis_bb: r.jenis_bb, bb_masuk: r.bb_masuk, produk: r.produk, hasil_kg: r.hasil_kg, susut: r.susut, limbah_tutup: r.limbah_tutup || 0, limbah_emberan: r.limbah_emberan || 0, limbah_reject: r.limbah_reject || 0, mesin: r.mesin, operator: r.operator, catatan: r.catatan || "" };
+        if (sourcePage === "Penjualan")
+            return { id: r.id, tgl: r.tgl, produk: r.produk, kg: r.kg, harga: r.harga, buyer: r.buyer || "", catatan: r.catatan || "" };
+        if (sourcePage === "Absensi")
+            return { id: r.id, tgl: r.tgl, nama: r.nama, masuk: r.masuk || "", keluar: r.keluar || "", status: r.status };
+        if (sourcePage === "Pengeluaran")
+            return { id: r.id, tgl: r.tgl, kategori: r.kategori, keterangan: r.keterangan || "", jumlah: r.jumlah, bukti: r.bukti || "" };
+        if (sourcePage === "Karyawan")
+            return { id: r.id, nama: r.nama, jabatan: r.jabatan || "", tipe_gaji: r.tipeGaji || r.tipe_gaji || "harian", gaji_harian: r.gajiHarian || r.gaji_harian || 0, gaji_bulanan: r.gajiBulanan || r.gaji_bulanan || 0, status: r.status || "Aktif", bergabung: r.bergabung || null };
+        if (sourcePage === "Maintenance")
+            return { id: r.id, aset: r.aset || "", tgl: r.tgl, jenis: r.jenis, vendor: r.vendor || "", biaya: r.biaya || 0, odometer: r.odometer || "", catatan: r.catatan || "" };
+        if (sourcePage === "Purchase Order") {
+            const newId = uid();
+            if (r.jenis === "keluar")
+                return { _tbl: "po_keluar", id: newId, no_po: r.id, tgl: r.tgl, supplier: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
+            return { _tbl: "po_masuk", id: newId, no_po: r.id, tgl: r.tgl, buyer: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
+        }
+        return r; // fallback: send as-is
+    };
     const doRestore = (trashId) => {
         const item = window.__erp_trash.find(x => x._trashId === trashId);
         if (item) {
-            const tbl = TABLE_MAP[item._sourcePage];
+            const cleaned = cleanForDB(item._sourcePage, item);
+            const tbl = cleaned._tbl || TABLE_MAP[item._sourcePage];
             if (tbl) {
-                // Strip trash metadata and restore to DB
-                const { _trashId, _sourcePage, _label, _deletedAt } = item, row = __rest(item, ["_trashId", "_sourcePage", "_label", "_deletedAt"]);
+                const { _tbl } = cleaned, row = __rest(cleaned, ["_tbl"]);
                 dbUpsert(tbl, row);
             }
         }
@@ -6090,9 +6146,10 @@ function TrashPage() {
         [...selected].forEach(id => {
             const item = window.__erp_trash.find(x => x._trashId === id);
             if (item) {
-                const tbl = TABLE_MAP[item._sourcePage];
+                const cleaned = cleanForDB(item._sourcePage, item);
+                const tbl = cleaned._tbl || TABLE_MAP[item._sourcePage];
                 if (tbl) {
-                    const { _trashId, _sourcePage, _label, _deletedAt } = item, row = __rest(item, ["_trashId", "_sourcePage", "_label", "_deletedAt"]);
+                    const { _tbl } = cleaned, row = __rest(cleaned, ["_tbl"]);
                     dbUpsert(tbl, row);
                 }
             }
@@ -6135,7 +6192,7 @@ function TrashPage() {
                     " item tersimpan \u00B7 Pilih item untuk restore atau hapus permanen")),
             React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } },
                 selected.size > 0 && React.createElement(React.Fragment, null,
-                    React.createElement(Btn, { variant: "outline", onClick: () => guard(() => doBulkRestore(), "edit") },
+                    React.createElement(Btn, { variant: "outline", onClick: () => doBulkRestore() },
                         "\u21A9 Restore (",
                         selected.size,
                         ")"),
@@ -6189,7 +6246,7 @@ function TrashPage() {
                             React.createElement("td", { style: { padding: "10px 12px", color: C.muted, fontSize: 12, whiteSpace: "nowrap" } }, item._deletedAt),
                             React.createElement("td", { style: { padding: "10px 12px" } },
                                 React.createElement("div", { style: { display: "flex", gap: 6 } },
-                                    React.createElement("button", { onClick: () => guard(() => doRestore(item._trashId), "edit"), style: { padding: "5px 12px", borderRadius: 7, border: `1px solid ${C.accentBorder}`, background: C.accentBg, color: C.accentDark, fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" } }, "\u21A9 Restore"),
+                                    React.createElement("button", { onClick: () => doRestore(item._trashId), style: { padding: "5px 12px", borderRadius: 7, border: `1px solid ${C.accentBorder}`, background: C.accentBg, color: C.accentDark, fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" } }, "\u21A9 Restore"),
                                     React.createElement(Btn, { variant: "danger", size: "sm", onClick: () => guard(() => doPermDelete(item._trashId), "delete") },
                                         React.createElement(Trash2, { size: 12 }),
                                         " Hapus")))));
@@ -6222,10 +6279,12 @@ function App() {
     const [sharedAbsensi, setSharedAbsensi] = useState([]);
     const [sharedKaryawan, setSharedKaryawan] = useState([]);
     useEffect(() => {
+        if (!loggedIn)
+            return; // jangan load sebelum login
         dbLoad('absensi', setSharedAbsensi);
         dbLoad('karyawan', d => setSharedKaryawan(d.map(r => (Object.assign(Object.assign({}, r), { tipeGaji: r.tipe_gaji || 'harian', gajiHarian: r.gaji_harian || 0, gajiBulanan: r.gaji_bulanan || 0, gaji: r.tipe_gaji === 'bulanan' ? (r.gaji_bulanan || 0) : (r.gaji_harian || 0), bergabung: r.bergabung || '' })))));
         dbLoad('aset', setSharedAset);
-    }, []);
+    }, [loggedIn]);
     // ── Definisi kategori stok ──
     const PRODUK_JADI = ["Gilingan PET", "PET Press"]; // potong sharedStok
     const PRODUK_LIMBAH = ["Tutup Botol", "Emberan", "Reject"]; // potong sharedStokLimbah
@@ -6319,13 +6378,7 @@ function App() {
     // ── Shared saldo kas — editable di Finance, tampil di Dashboard ──
     const [sharedSaldo, setSharedSaldo] = useState(125000000);
     // ── Shared transaksi kas — untuk Laporan Arus Kas Pendanaan ──
-    const TX_INIT = [
-        { id: "t1", tgl: "2026-03-25", tipe: "Masuk", keterangan: "Pembayaran dari PT Plastindo Makmur", jumlah: 36000000 },
-        { id: "t2", tgl: "2026-03-24", tipe: "Keluar", keterangan: "Pembelian Bahan Baku CV Maju Jaya", jumlah: 15000000 },
-        { id: "t3", tgl: "2026-03-22", tipe: "Masuk", keterangan: "Pembayaran dari PT Sinergi Recycle", jumlah: 52500000 },
-        { id: "t4", tgl: "2026-03-20", tipe: "Keluar", keterangan: "Biaya Operasional Maret", jumlah: 8500000 },
-        { id: "t5", tgl: "2026-03-18", tipe: "Keluar", keterangan: "Pembayaran Gaji Karyawan", jumlah: 31100000 },
-    ];
+    const TX_INIT = [];
     const [sharedTransaksi, setSharedTransaksi] = useState(TX_INIT);
     const handleLogin = (role, name) => { setUser({ role, name }); setLoggedIn(true); setActive("dashboard"); };
     const handleLogout = () => { setLoggedIn(false); setUser(null); };
@@ -6381,7 +6434,14 @@ function App() {
 
 const rootEl=document.getElementById('root');
 const root=ReactDOM.createRoot(rootEl);
-root.render(React.createElement(App));
-const l=document.getElementById('loading');if(l)l.style.display='none';
+try {
+  root.render(React.createElement(App));
+  const l=document.getElementById('loading');if(l)l.style.display='none';
+} catch(e) {
+  document.getElementById('loading').innerHTML='<div style="color:#fca5a5;font-family:monospace;padding:24px"><b>Render Error:</b><br><br>'+e.message+'<br><br><small>'+e.stack+'</small></div>';
+}
 
+} catch(e) {
+  document.getElementById('loading').innerHTML='<div style="color:#fca5a5;font-family:monospace;padding:24px;background:#0d1117;min-height:100vh"><b>JS Error:</b><br><br>'+e.message+'<br><br><small>'+e.stack+'</small></div>';
+}
 </script></body></html>
