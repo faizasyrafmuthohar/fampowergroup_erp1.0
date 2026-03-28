@@ -231,7 +231,9 @@ const dbUpsert = async (table, row) => {
     const db = getDB();
     if (!db)
         return;
-    const { error } = await db.from(table).upsert(row, { onConflict: 'id' });
+    // Strip internal JS-only fields (prefixed with _) before sending to DB
+    const clean = Object.fromEntries(Object.entries(row).filter(([k]) => !k.startsWith('_')));
+    const { error } = await db.from(table).upsert(clean, { onConflict: 'id' });
     if (error) {
         console.warn('DB upsert error:', table, error.message);
         alert('Gagal simpan ke database: ' + error.message);
