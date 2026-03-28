@@ -3244,8 +3244,8 @@ function POPage() {
     const [dataMasuk, setDataMasuk] = useState(poMasukList);
     const [dataKeluar, setDataKeluar] = useState(poKeluarList);
     useEffect(() => {
-        dbLoad('po_masuk', d => setDataMasuk(d.map(r => (Object.assign(Object.assign({}, r), { jenis: 'masuk', pihak: r.pihak || r.buyer || r.supplier || '', id: r.no_po || r.id, realisasiKg: r.realisasi_kg || 0 })))));
-        dbLoad('po_keluar', d => setDataKeluar(d.map(r => (Object.assign(Object.assign({}, r), { jenis: 'keluar', pihak: r.pihak || r.supplier || r.buyer || '', id: r.no_po || r.id, realisasiKg: r.realisasi_kg || 0 })))));
+        dbLoad('po_masuk', d => setDataMasuk(d.map(r => (Object.assign(Object.assign({}, r), { jenis: 'masuk', _dbId: r.id, pihak: r.pihak || r.buyer || r.supplier || '', id: r.no_po || r.id, realisasiKg: r.realisasi_kg || 0 })))));
+        dbLoad('po_keluar', d => setDataKeluar(d.map(r => (Object.assign(Object.assign({}, r), { jenis: 'keluar', _dbId: r.id, pihak: r.pihak || r.supplier || r.buyer || '', id: r.no_po || r.id, realisasiKg: r.realisasi_kg || 0 })))));
     }, []);
     const [activeTab, setActiveTab] = useState("masuk"); // masuk | keluar | history
     const [modalOpen, setModalOpen] = useState(false);
@@ -3288,15 +3288,20 @@ function POPage() {
             kg, harga, realisasiKg: Number(form.realisasiKg.replace(/\D/g, "") || 0),
             deadline: form.deadline, status: form.status, catatan: form.catatan };
         const setter = formJenis === "masuk" ? setDataMasuk : setDataKeluar;
+        if (!editId)
+            row._dbId = undefined; // will be set after save
         setter(d => editId ? d.map(r => r.id === editId ? row : r) : [row, ...d]);
         const tbl = formJenis === 'masuk' ? 'po_masuk' : 'po_keluar';
         const poUUID = uid();
-        const poRow = { id: poUUID, no_po: row.id, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
+        const poRow = { id: poUUID, no_po: row.id, _dbId: poUUID, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
         if (formJenis === 'masuk')
             poRow.buyer = row.pihak;
         else
             poRow.supplier = row.pihak;
         dbUpsert(tbl, poRow);
+        // Update _dbId in local state so delete works immediately
+        if (!editId)
+            setter(d => d.map(r => r.id === row.id ? Object.assign(Object.assign({}, r), { _dbId: poUUID }) : r));
         setModalOpen(false);
     };
     const _remove = (id, jenis) => {
@@ -3306,7 +3311,7 @@ function POPage() {
         if (row)
             addToTrash(row, "Purchase Order", `${row.id} — ${row.pihak}`);
         setter(d => d.filter(r => r.id !== id));
-        dbDelete(jenis === "masuk" ? 'po_masuk' : 'po_keluar', id);
+        dbDelete(jenis === "masuk" ? 'po_masuk' : 'po_keluar', (row === null || row === void 0 ? void 0 : row._dbId) || id);
     };
     const remove = (id, jenis) => guard(() => _remove(id, jenis), "delete");
     const ubahStatus = (id, jenis, newStatus) => {
@@ -6121,10 +6126,10 @@ function TrashPage() {
         if (sourcePage === "Maintenance")
             return { id: r.id, aset: r.aset || "", tgl: r.tgl, jenis: r.jenis, vendor: r.vendor || "", biaya: r.biaya || 0, odometer: r.odometer || "", catatan: r.catatan || "" };
         if (sourcePage === "Purchase Order") {
-            const newId = uid();
+            const restoreId = r._dbId || uid();
             if (r.jenis === "keluar")
-                return { _tbl: "po_keluar", id: newId, no_po: r.id, tgl: r.tgl, supplier: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
-            return { _tbl: "po_masuk", id: newId, no_po: r.id, tgl: r.tgl, buyer: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
+                return { _tbl: "po_keluar", id: restoreId, no_po: r.id, tgl: r.tgl, supplier: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
+            return { _tbl: "po_masuk", id: restoreId, no_po: r.id, tgl: r.tgl, buyer: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
         }
         return r; // fallback: send as-is
     };
