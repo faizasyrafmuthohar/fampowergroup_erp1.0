@@ -722,7 +722,11 @@ function LoginPage({ onLogin }) {
         try {
             const { error: authError } = await window.db.auth.signInWithPassword({ email, password });
             if (authError) {
-                setError("Email atau password salah");
+                const msg = authError.message;
+                if (msg.includes("Email not confirmed"))
+                    setError("Akun belum dikonfirmasi. Aktifkan dulu di Supabase Auth → Providers → Email → matikan Confirm email");
+                else
+                    setError("Email atau password salah: " + msg);
                 setLoading(false);
                 return;
             }
@@ -1485,7 +1489,7 @@ function SupplierPage() {
     const [supForm, setSupForm] = useState(emptySup);
     const [search, setSearch] = useState("");
     useEffect(() => {
-        dbLoad('suppliers', d => setSuppliers(d.map(s => (Object.assign(Object.assign({}, s), { noHp: s.noHp || s.kontak || '', alamat: s.alamat || s.kota || '', bank: s.bank || '', noRekening: s.noRekening || '', anRekening: s.anRekening || '' })))));
+        dbLoad('suppliers', d => setSuppliers(d.map(s => (Object.assign(Object.assign({}, s), { noHp: s.noHp || s.kontak || '', alamat: s.alamat || s.kota || '', bank: s.bank || '', noRekening: s.noRekening || s.no_rekening || '', anRekening: s.anRekening || s.an_rekening || '' })))));
     }, []);
     const openAdd = () => { setSupForm(emptySup); setSupEditId(null); setSupModal(true); };
     const openEdit = s => guard(() => { setSupForm({ nama: s.nama, noHp: s.noHp || "", alamat: s.alamat || s.kota || "", bank: s.bank || "", noRekening: s.noRekening || "", anRekening: s.anRekening || "", keterangan: s.keterangan || "" }); setSupEditId(s.id); setSupModal(true); }, "edit");
@@ -1494,7 +1498,7 @@ function SupplierPage() {
             return;
         const row = { id: supEditId || uid(), nama: supForm.nama, noHp: supForm.noHp, alamat: supForm.alamat, bank: supForm.bank, noRekening: supForm.noRekening, anRekening: supForm.anRekening, keterangan: supForm.keterangan, kontak: supForm.noHp, kota: supForm.alamat };
         setSuppliers(d => supEditId ? d.map(r => r.id === supEditId ? row : r) : [row, ...d]);
-        dbUpsert('suppliers', { id: row.id, nama: row.nama, kontak: row.noHp || "", kota: row.alamat || "", keterangan: `Bank: ${row.bank || "-"} | Rek: ${row.noRekening || "-"} | AN: ${row.anRekening || "-"}` });
+        dbUpsert('suppliers', { id: row.id, nama: row.nama, kontak: row.noHp || "", kota: row.alamat || "", bank: row.bank || "", no_rekening: row.noRekening || "", an_rekening: row.anRekening || "", keterangan: row.keterangan || "" });
         setSupModal(false);
     };
     const removeSup = id => guard(() => { const s = suppliers.find(r => r.id === id); if (s)
@@ -3287,24 +3291,36 @@ function POPage() {
         if (!form.pihak || !form.kg)
             return;
         const kg = Number(form.kg.replace(/\D/g, "")), harga = Number(form.harga.replace(/\D/g, "") || 0);
+        const src = formJenis === "masuk" ? dataMasuk : dataKeluar;
+        const existing = editId ? src.find(r => r.id === editId) : null;
         const row = { id: form.id, jenis: formJenis, tgl: form.tgl, pihak: form.pihak, produk: form.produk,
             kg, harga, realisasiKg: Number(form.realisasiKg.replace(/\D/g, "") || 0),
-            deadline: form.deadline, status: form.status, catatan: form.catatan };
+            deadline: form.deadline, status: form.status, catatan: form.catatan,
+            _dbId: existing === null || existing === void 0 ? void 0 : existing._dbId }; // preserve existing _dbId on edit
         const setter = formJenis === "masuk" ? setDataMasuk : setDataKeluar;
-        if (!editId)
-            row._dbId = undefined; // will be set after save
-        setter(d => editId ? d.map(r => r.id === editId ? row : r) : [row, ...d]);
         const tbl = formJenis === 'masuk' ? 'po_masuk' : 'po_keluar';
-        const poUUID = uid();
-        const poRow = { id: poUUID, no_po: row.id, _dbId: poUUID, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
-        if (formJenis === 'masuk')
-            poRow.buyer = row.pihak;
-        else
-            poRow.supplier = row.pihak;
-        dbUpsert(tbl, poRow);
-        // Update _dbId in local state so delete works immediately
-        if (!editId)
-            setter(d => d.map(r => r.id === row.id ? Object.assign(Object.assign({}, r), { _dbId: poUUID }) : r));
+        if (editId && (existing === null || existing === void 0 ? void 0 : existing._dbId)) {
+            // Edit existing: update using real UUID
+            setter(d => d.map(r => r.id === editId ? row : r));
+            const poRow = { id: existing._dbId, no_po: row.id, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
+            if (formJenis === 'masuk')
+                poRow.buyer = row.pihak;
+            else
+                poRow.supplier = row.pihak;
+            dbUpsert(tbl, poRow);
+        }
+        else {
+            // New PO
+            const poUUID = uid();
+            row._dbId = poUUID;
+            setter(d => [row, ...d]);
+            const poRow = { id: poUUID, no_po: row.id, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
+            if (formJenis === 'masuk')
+                poRow.buyer = row.pihak;
+            else
+                poRow.supplier = row.pihak;
+            dbUpsert(tbl, poRow);
+        }
         setModalOpen(false);
     };
     const _remove = (id, jenis) => {
@@ -3319,7 +3335,13 @@ function POPage() {
     const remove = (id, jenis) => guard(() => _remove(id, jenis), "delete");
     const ubahStatus = (id, jenis, newStatus) => {
         const setter = jenis === "masuk" ? setDataMasuk : setDataKeluar;
+        const src = jenis === "masuk" ? dataMasuk : dataKeluar;
+        const row = src.find(r => r.id === id);
         setter(d => d.map(r => r.id === id ? Object.assign(Object.assign({}, r), { status: newStatus }) : r));
+        if (row === null || row === void 0 ? void 0 : row._dbId) {
+            const tbl = jenis === 'masuk' ? 'po_masuk' : 'po_keluar';
+            dbUpsert(tbl, { id: row._dbId, status: newStatus });
+        }
     };
     // Filter aktif vs history
     const displayData = activeTab === "history"
@@ -4428,7 +4450,7 @@ function KwitansiPage() {
             return;
         const row = Object.assign({ id: supEditId || uid() }, supForm);
         setSuppliers(d => supEditId ? d.map(r => r.id === supEditId ? row : r) : [row, ...d]);
-        dbUpsert('suppliers', { id: row.id, nama: row.nama, kontak: row.noHp || "", kota: row.alamat || "", keterangan: `Bank: ${row.bank || "-"} | Rek: ${row.noRekening || "-"} | AN: ${row.anRekening || "-"}` });
+        dbUpsert('suppliers', { id: row.id, nama: row.nama, kontak: row.noHp || "", kota: row.alamat || "", bank: row.bank || "", no_rekening: row.noRekening || "", an_rekening: row.anRekening || "", keterangan: row.keterangan || "" });
         setSupModal(false);
     };
     const removeSup = id => guard(() => { setSuppliers(d => d.filter(r => r.id !== id)); dbDelete('suppliers', id); }, "delete");
@@ -6166,7 +6188,7 @@ function TrashPage() {
             return { _tbl: "po_masuk", id: restoreId, no_po: r.id, tgl: r.tgl, buyer: r.pihak || "", produk: r.produk, kg: r.kg, harga: r.harga || 0, realisasi_kg: r.realisasiKg || r.realisasi_kg || 0, deadline: r.deadline || null, status: r.status, catatan: r.catatan || "" };
         }
         if (sourcePage === "Supplier")
-            return { id: r.id, nama: r.nama, kontak: r.noHp || r.kontak || "", kota: r.alamat || r.kota || "", keterangan: r.keterangan || "" };
+            return { id: r.id, nama: r.nama, kontak: r.noHp || r.kontak || "", kota: r.alamat || r.kota || "", bank: r.bank || "", no_rekening: r.noRekening || r.no_rekening || "", an_rekening: r.anRekening || r.an_rekening || "", keterangan: r.keterangan || "" };
         return r; // fallback: send as-is
     };
     const doRestore = (trashId) => {
