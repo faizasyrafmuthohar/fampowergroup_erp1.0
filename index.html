@@ -3304,7 +3304,7 @@ function POPage() {
         if (editId && (existing === null || existing === void 0 ? void 0 : existing._dbId)) {
             // Edit existing: update using real UUID
             setter(d => d.map(r => r.id === editId ? row : r));
-            const poRow = { id: existing._dbId, no_po: row.id, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
+            const poRow = { id: existing._dbId, no_po: row.id || `PO-${existing._dbId.slice(0, 8)}`, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
             if (formJenis === 'masuk')
                 poRow.buyer = row.pihak;
             else
@@ -3316,7 +3316,7 @@ function POPage() {
             const poUUID = uid();
             row._dbId = poUUID;
             setter(d => [row, ...d]);
-            const poRow = { id: poUUID, no_po: row.id, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
+            const poRow = { id: poUUID, no_po: row.id || `PO-${poUUID.slice(0, 8)}`, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
             if (formJenis === 'masuk')
                 poRow.buyer = row.pihak;
             else
