@@ -3377,7 +3377,7 @@ function POPage() {
             React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13 } },
                 React.createElement("thead", null,
                     React.createElement("tr", { style: { background: C.surface2, borderBottom: `2px solid ${C.border}` } }, (activeTab === "history"
-                        ? ["No. PO", "Jenis", "Tanggal", "Nama", "Produk", "PO (kg)", "Realisasi", "Total Nilai", "Status"]
+                        ? ["No. PO", "Jenis", "Tanggal", "Nama", "Produk", "PO (kg)", "Realisasi", "Total Nilai", "Status", "Aksi"]
                         : ["No. PO", "Tanggal", "Nama", "Produk", "PO (kg)", "Realisasi", "Total Nilai", "Deadline", "Status", "Aksi"]).map((h, i) => (React.createElement("th", { key: i, style: { padding: "9px 12px", textAlign: i >= 4 && i <= 6 ? "right" : "left", color: C.muted, fontWeight: 700, fontSize: 11, textTransform: "uppercase", whiteSpace: "nowrap" } }, h))))),
                 React.createElement("tbody", null,
                     displayData.length === 0 && (React.createElement("tr", null,
@@ -3418,6 +3418,12 @@ function POPage() {
                                     nextStatus && (React.createElement(Btn, { size: "sm", onClick: () => ubahStatus(p.id, p.jenis, nextStatus), style: { fontSize: 11, padding: "3px 8px", whiteSpace: "nowrap" } },
                                         "\u2192 ",
                                         nextStatus)),
+                                    React.createElement(Btn, { variant: "outline", size: "sm", onClick: () => openEdit(p) },
+                                        React.createElement(Edit2, { size: 11 })),
+                                    React.createElement(Btn, { variant: "danger", size: "sm", onClick: () => remove(p.id, p.jenis) },
+                                        React.createElement(Trash2, { size: 11 }))))),
+                            activeTab === "history" && (React.createElement("td", { style: { padding: "10px 12px" } },
+                                React.createElement("div", { style: { display: "flex", gap: 4, flexWrap: "nowrap" } },
                                     React.createElement(Btn, { variant: "outline", size: "sm", onClick: () => openEdit(p) },
                                         React.createElement(Edit2, { size: 11 })),
                                     React.createElement(Btn, { variant: "danger", size: "sm", onClick: () => remove(p.id, p.jenis) },
@@ -5420,7 +5426,7 @@ function AkunPage({ currentUser }) {
             return;
         const row = { id: editId || uid(), nama: form.nama, email: form.email, role: form.role, status: form.status, lastLogin: editId ? (_a = data.find(r => r.id === editId)) === null || _a === void 0 ? void 0 : _a.lastLogin : "Belum pernah login" };
         setData(d => editId ? d.map(r => r.id === editId ? row : r) : [row, ...d]);
-        dbUpsert('users', { id: row.id, nama: row.nama, email: row.email, role: row.role, status: row.status || 'Aktif' });
+        dbUpsert('users', { id: row.id, nama: row.nama, email: row.email, role: row.role });
         setModalOpen(false);
     };
     const toggleStatus = id => {
