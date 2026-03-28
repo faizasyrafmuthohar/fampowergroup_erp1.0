@@ -257,7 +257,7 @@ const SUPPLIERS_INIT = []; // loaded from DB
 const COLORS = ["#16a34a", "#2563eb", "#7c3aed", "#d97706", "#0891b2", "#dc2626", "#059669", "#ea580c", "#6366f1", "#0284c7", "#64748b"];
 const KAT_COLOR = {};
 KATEGORI_OPEX.forEach((k, i) => { KAT_COLOR[k] = COLORS[i % COLORS.length]; });
-const TODAY = "2026-03-25";
+const TODAY = new Date().toISOString().slice(0, 10); // actual current date
 // ═══════════════════════════════════════════════════════════════════════════════
 // SEED DATA
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3264,16 +3264,16 @@ function POPage() {
     const STATUS_DONE = ["Selesai", "Dibatalkan"];
     const isMasuk = activeTab === "masuk" || activeTab === "history" && true; // form context
     const [formJenis, setFormJenis] = useState("masuk"); // for modal
-    const emptyMasuk = { id: "", tgl: TODAY, pihak: "", produk: "Gilingan PET", kg: "", harga: "", realisasiKg: "", deadline: "", status: "Diproses", catatan: "" };
-    const emptyKeluar = { id: "", tgl: TODAY, pihak: "", produk: "Bahan Baku PET", kg: "", harga: "", realisasiKg: "", deadline: "", status: "Diproses", catatan: "" };
-    const [form, setForm] = useState(emptyMasuk);
+    const emptyMasuk = () => ({ id: "", tgl: new Date().toISOString().slice(0, 10), pihak: "", produk: "Gilingan PET", kg: "", harga: "", realisasiKg: "", deadline: "", status: "Diproses", catatan: "" });
+    const emptyKeluar = () => ({ id: "", tgl: new Date().toISOString().slice(0, 10), pihak: "", produk: "Bahan Baku PET", kg: "", harga: "", realisasiKg: "", deadline: "", status: "Diproses", catatan: "" });
+    const [form, setForm] = useState(emptyMasuk());
     const setData = activeTab === "keluar" ? setDataKeluar : setDataMasuk;
     const activeFull = activeTab === "masuk" ? dataMasuk
         : activeTab === "keluar" ? dataKeluar
             : [...dataMasuk, ...dataKeluar]; // history: all done
     const openAdd = (jenis = "masuk") => {
         setFormJenis(jenis);
-        const base = jenis === "masuk" ? emptyMasuk : emptyKeluar;
+        const base = jenis === "masuk" ? emptyMasuk() : emptyKeluar();
         const prefix = jenis === "masuk" ? "POM" : "POK";
         const nextNum = (jenis === "masuk" ? dataMasuk : dataKeluar).length + 2607;
         setForm(Object.assign(Object.assign({}, base), { id: `${prefix}-${nextNum}` }));
@@ -3304,7 +3304,7 @@ function POPage() {
         if (editId && (existing === null || existing === void 0 ? void 0 : existing._dbId)) {
             // Edit existing: update using real UUID
             setter(d => d.map(r => r.id === editId ? row : r));
-            const poRow = { id: existing._dbId, no_po: row.id || `PO-${existing._dbId.slice(0, 8)}`, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
+            const poRow = { id: existing._dbId, no_po: row.id || `PO-${existing._dbId.slice(0, 8)}`, tgl: row.tgl || TODAY, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
             if (formJenis === 'masuk')
                 poRow.buyer = row.pihak;
             else
@@ -3316,7 +3316,7 @@ function POPage() {
             const poUUID = uid();
             row._dbId = poUUID;
             setter(d => [row, ...d]);
-            const poRow = { id: poUUID, no_po: row.id || `PO-${poUUID.slice(0, 8)}`, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
+            const poRow = { id: poUUID, no_po: row.id || `PO-${poUUID.slice(0, 8)}`, tgl: row.tgl || TODAY, produk: row.produk, kg: row.kg, harga: row.harga || 0, realisasi_kg: row.realisasiKg || 0, deadline: row.deadline || null, status: row.status, catatan: row.catatan || '' };
             if (formJenis === 'masuk')
                 poRow.buyer = row.pihak;
             else
