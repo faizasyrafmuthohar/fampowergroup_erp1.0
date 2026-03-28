@@ -5420,13 +5420,29 @@ function AkunPage({ currentUser }) {
     const openEdit = row => guard(() => __openEditAkun(row), "edit");
     const valid = form.nama && form.email && form.role &&
         (editId ? true : (form.password.length >= 6 && form.password === form.confirmPassword));
-    const save = () => {
+    const save = async () => {
         var _a;
         if (!valid)
             return;
-        const row = { id: editId || uid(), nama: form.nama, email: form.email, role: form.role, status: form.status, lastLogin: editId ? (_a = data.find(r => r.id === editId)) === null || _a === void 0 ? void 0 : _a.lastLogin : "Belum pernah login" };
-        setData(d => editId ? d.map(r => r.id === editId ? row : r) : [row, ...d]);
-        dbUpsert('users', { id: row.id, nama: row.nama, email: row.email, role: row.role });
+        const rowId = editId || uid();
+        if (!editId) {
+            // Akun baru: daftar ke Supabase Auth dulu
+            const db = getDB();
+            if (db) {
+                const { error: signUpErr } = await db.auth.signUp({ email: form.email, password: form.password });
+                if (signUpErr && !signUpErr.message.includes('already registered')) {
+                    alert("Gagal buat akun: " + signUpErr.message);
+                    return;
+                }
+            }
+        }
+        const row = { id: rowId, nama: form.nama, email: form.email, role: form.role, lastLogin: editId ? (_a = data.find(r => r.id === editId)) === null || _a === void 0 ? void 0 : _a.lastLogin : "Belum pernah login" };
+        setData(d => editId ? d.map(r => r.id === editId ? Object.assign(Object.assign({}, r), row) : r) : [row, ...d]);
+        // Upsert users dengan email sebagai unique key
+        const db2 = getDB();
+        if (db2)
+            db2.from('users').upsert({ id: rowId, nama: form.nama, email: form.email, role: form.role }, { onConflict: 'email' }).then(({ error }) => { if (error)
+                console.warn('users upsert:', error.message); });
         setModalOpen(false);
     };
     const toggleStatus = id => {
