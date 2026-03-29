@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Fam Power Group ERP v1.0</title>
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f5f1;}input,select,button,textarea{font-family:inherit;}::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:#f1f5f9;}::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:3px;}#loading{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:#0d3320;position:fixed;inset:0;z-index:9999;}.spinner{width:60px;height:60px;border:4px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}</style>
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoo UI',system-ui,sans-serif;background:#f0f5f1;}input,select,button,textarea{font-family:inherit;}::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:#f1f5f9;}::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:3px;}#loading{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:#0d3320;position:fixed;inset:0;z-index:9999;}.spinner{width:60px;height:60px;border:4px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}</style>
 </head><body>
 <div id="loading"><div class="spinner"></div><div style="color:#a7f3d0;font-size:15px;">Memuat Fam Power Group ERP v1.0...</div></div>
 <div id="root"></div>
@@ -738,7 +738,10 @@ function LoginPage({ onLogin }) {
                 setLoading(false);
                 return;
             }
-            onLogin(userData.role, userData.nama);
+            // Update lastLogin timestamp
+            const now = new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+            window.db.from('users').update({ last_login: new Date().toISOString() }).eq('email', email).then(() => { });
+            onLogin(userData.role, userData.nama, now);
         }
         catch (e) {
             setError("Gagal konek ke server");
@@ -5441,7 +5444,15 @@ function AkunPage({ currentUser }) {
     const [newPass, setNewPass] = useState("");
     const [confirmPass, setConfirmPass] = useState("");
     const [passSaved, setPassSaved] = useState(false);
-    useEffect(() => { dbLoad('users', setData); }, []);
+    useEffect(() => {
+        const db2 = getDB();
+        if (!db2)
+            return;
+        db2.from('users').select('*').then(({ data }) => {
+            if (data)
+                setData(data.map(u => (Object.assign(Object.assign({}, u), { lastLogin: u.last_login ? new Date(u.last_login).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : 'Belum pernah login' }))));
+        });
+    }, []);
     const emptyForm = { nama: "", email: "", role: "staff", status: "Aktif", password: "", confirmPassword: "" };
     const [form, setForm] = useState(emptyForm);
     const openAdd = () => { setForm(emptyForm); setEditId(null); setShowPass(false); setModalOpen(true); };
@@ -5488,7 +5499,12 @@ function AkunPage({ currentUser }) {
             return;
         const newStatus = u.status === "Aktif" ? "Nonaktif" : "Aktif";
         setData(d => d.map(r => r.id === id ? Object.assign(Object.assign({}, r), { status: newStatus }) : r));
-        dbUpsert('users', { id: u.id, nama: u.nama, email: u.email, role: u.role });
+        // Save status to DB
+        const db2 = getDB();
+        if (!db2)
+            return;
+        db2.from('users').update({ status: newStatus }).eq('email', u.email).then(({ error }) => { if (error)
+            console.warn('toggleStatus:', error.message); });
     };
     const _remove = id => { if (id === "u1")
         return; setData(d => d.filter(r => r.id !== id)); };
@@ -6259,7 +6275,7 @@ function TrashPage() {
                     " item tersimpan \u00B7 Pilih item untuk restore atau hapus permanen")),
             React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } },
                 selected.size > 0 && React.createElement(React.Fragment, null,
-                    React.createElement(Btn, { variant: "outline", onClick: () => doBulkRestore() },
+                    React.createElement(Btn, { variant: "outline", onClick: () => guard(() => doBulkRestore(), "edit") },
                         "\u21A9 Restore (",
                         selected.size,
                         ")"),
@@ -6313,7 +6329,7 @@ function TrashPage() {
                             React.createElement("td", { style: { padding: "10px 12px", color: C.muted, fontSize: 12, whiteSpace: "nowrap" } }, item._deletedAt),
                             React.createElement("td", { style: { padding: "10px 12px" } },
                                 React.createElement("div", { style: { display: "flex", gap: 6 } },
-                                    React.createElement("button", { onClick: () => doRestore(item._trashId), style: { padding: "5px 12px", borderRadius: 7, border: `1px solid ${C.accentBorder}`, background: C.accentBg, color: C.accentDark, fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" } }, "\u21A9 Restore"),
+                                    React.createElement("button", { onClick: () => guard(() => doRestore(item._trashId), "edit"), style: { padding: "5px 12px", borderRadius: 7, border: `1px solid ${C.accentBorder}`, background: C.accentBg, color: C.accentDark, fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" } }, "\u21A9 Restore"),
                                     React.createElement(Btn, { variant: "danger", size: "sm", onClick: () => guard(() => doPermDelete(item._trashId), "delete") },
                                         React.createElement(Trash2, { size: 12 }),
                                         " Hapus")))));
@@ -6438,7 +6454,7 @@ function App() {
     // ── Shared transaksi kas — untuk Laporan Arus Kas Pendanaan ──
     const TX_INIT = [];
     const [sharedTransaksi, setSharedTransaksi] = useState(TX_INIT);
-    const handleLogin = (role, name) => { setUser({ role, name }); setLoggedIn(true); setActive("dashboard"); };
+    const handleLogin = (role, name, loginTime) => { setUser({ role, name, loginTime }); setLoggedIn(true); setActive("dashboard"); };
     const handleLogout = () => { setLoggedIn(false); setUser(null); };
     if (!loggedIn)
         return React.createElement(LoginPage, { onLogin: handleLogin });
