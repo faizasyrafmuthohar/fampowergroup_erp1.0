@@ -3978,7 +3978,21 @@ function PenggajianPage({ absensiData, karyawanData }) {
                                                     return Object.assign(Object.assign({}, hk), { [r.k.id]: updated });
                                                 });
                                             }
-                                            setSudahBayar(s => (Object.assign(Object.assign({}, s), { [bayarKey]: true })));
+                                            onClick: async () => {
+
+  const { error } = await window.db
+    .from('penggajian')
+    .update({ status: 'lunas' })
+    .eq('id', r.id)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  setSudahBayar(s => ({ ...s, [bayarKey]: true }))
+  alert('✅ Berhasil tandai lunas')
+}
                                         } },
                                         React.createElement(Check, { size: 12 }),
                                         " Tandai Lunas"))));
