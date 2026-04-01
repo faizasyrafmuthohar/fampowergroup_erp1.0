@@ -6397,11 +6397,11 @@ function App() {
                 db.from('users').select('nama,role').eq('email', session.user.email).single()
                     .then(({ data: ud }) => {
                     if (ud) {
-                        setUser({ role: ud.role, name: ud.nama || "User" });
-                        setLoggedIn(true);
-                    }
-                    setSessionChecked(true);
-                });
+                        setUser({ role: ud.role, name: ud.nama }); 
+            setLoggedIn(true);
+        }
+        setSessionChecked(true);
+    });
             }
             else {
                 setSessionChecked(true);
