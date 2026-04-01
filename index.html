@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Fam Power Group ERP v1.0</title>
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoo UI',system-ui,sans-serif;background:#f0f5f1;}input,select,button,textarea{font-family:inherit;}::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:#f1f5f9;}::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:3px;}#loading{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:#0d3320;position:fixed;inset:0;z-index:9999;}.spinner{width:60px;height:60px;border:4px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}</style>
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f5f1;}input,select,button,textarea{font-family:inherit;}::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:#f1f5f9;}::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:3px;}#loading{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:#0d3320;position:fixed;inset:0;z-index:9999;}.spinner{width:60px;height:60px;border:4px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}</style>
 </head><body>
 <div id="loading"><div class="spinner"></div><div style="color:#a7f3d0;font-size:15px;">Memuat Fam Power Group ERP v1.0...</div></div>
 <div id="root"></div>
@@ -1233,7 +1233,7 @@ function AbsensiPage() {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState("all");
     const [filterNama, setFilterNama] = useState("all");
-    const [rekapNama, setRekapNama] = useState("");
+    const [rekapNama, setRekapNama] = useState("__pilih__");
     const [rekapDr, setRekapDr] = useState({ from: MONTH_START, to: TODAY });
     const [exporting, setExporting] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
@@ -1584,7 +1584,7 @@ function BahanBakuPage({ role, onBBMasuk }) {
     const [data, setData] = useState(BB_INIT);
     const [suppliers, setSuppliers] = useState([]);
     useEffect(() => {
-        dbLoad('bahan_baku', setData, r => (Object.assign(Object.assign({}, r), { items: r.items || [] })));
+        dbLoad('bahan_baku', d => setData(d.map(r => (Object.assign(Object.assign({}, r), { items: r.items || [], supplierId: r.supplierId || r.supplier || '', status: r.status || 'Lunas' })))));
         dbLoad('suppliers', setSuppliers);
     }, []);
     const { guard, GuardModal } = useGuard();
@@ -2182,6 +2182,8 @@ function OpexPage() {
 const PRODUK_JENIS = ["Gilingan PET", "PET Press", "Tutup Botol", "Emberan", "Reject", "Lainnya"];
 const produksiDataInit = [];
 function ProduksiPage({ onProduksi }) {
+    const [operatorList, setOperatorList] = useState([]);
+    useEffect(() => { dbLoad('karyawan', d => setOperatorList(d.map(k => k.nama).filter(Boolean).sort())); }, []);
     useEffect(() => {
         dbLoad('produksi', d => setData(d.map(r => (Object.assign(Object.assign({}, r), { jenisBB: r.jenisBB || r.jenis_bb || '', bbMasuk: r.bbMasuk != null ? r.bbMasuk : (r.bb_masuk != null ? Number(r.bb_masuk) : 0), hasilKg: r.hasilKg != null ? r.hasilKg : (r.hasil_kg != null ? Number(r.hasil_kg) : 0), susut: r.susut != null ? r.susut : 0, limbahTutupBotol: r.limbahTutupBotol != null ? r.limbahTutupBotol : (r.limbah_tutup || 0), limbahEmberan: r.limbahEmberan != null ? r.limbahEmberan : (r.limbah_emberan || 0), limbahReject: r.limbahReject != null ? r.limbahReject : (r.limbah_reject || 0), mesin: r.mesin || '', operator: r.operator || '' })))));
     }, []);
@@ -2421,7 +2423,7 @@ function ProduksiPage({ onProduksi }) {
                 React.createElement(Field, { label: "Operator" },
                     React.createElement("select", { value: form.operator, onChange: e => setForm(f => (Object.assign(Object.assign({}, f), { operator: e.target.value }))), style: selectStyle },
                         React.createElement("option", { value: "" }, "-- Pilih Operator --"),
-                        KARYAWAN_NAMA.map(n => React.createElement("option", { key: n }, n))))),
+                        operatorList.map(n => React.createElement("option", { key: n, value: n }, n))))),
             React.createElement(Field, { label: "Catatan (opsional)" },
                 React.createElement("input", { value: form.catatan, onChange: e => setForm(f => (Object.assign(Object.assign({}, f), { catatan: e.target.value }))), placeholder: "Kondisi produksi, keterangan khusus, dll", style: inputStyle })),
             React.createElement("div", { style: { background: "#fef9ec", borderRadius: 8, border: "1px solid #fde68a", padding: "10px 14px", marginTop: 4 } },
@@ -2450,7 +2452,7 @@ function ProduksiPage({ onProduksi }) {
 const COLORS_CHART = ["#16a34a", "#2563eb", "#7c3aed", "#d97706", "#0891b2", "#dc2626"];
 function PenjualanPage({ onJual }) {
     const [data, setData] = useState(penjualanList);
-    useEffect(() => { dbLoad('penjualan', setData); }, []);
+    useEffect(() => { dbLoad('penjualan', d => setData(d.map(r => (Object.assign(Object.assign({}, r), { kg: Number(r.kg || 0), harga: Number(r.harga || 0) }))))); }, []);
     const { guard, GuardModal } = useGuard();
     const [dr, setDr] = useState({ from: "2026-03-01", to: TODAY });
     const [search, setSearch] = useState("");
@@ -2469,7 +2471,7 @@ function PenjualanPage({ onJual }) {
         const kg = Number(form.kg.replace(/\D/g, "")), harga = Number(form.harga.replace(/\D/g, ""));
         const row = { id: editId || uid(), tgl: form.tgl, buyer: form.buyer, produk: form.produk, kg, harga, catatan: form.catatan };
         setData(d => editId ? d.map(r => r.id === editId ? row : r) : [row, ...d]);
-        // ── Auto kurangi stok ──
+        dbUpsert('penjualan', { id: row.id, tgl: row.tgl, produk: row.produk, kg: row.kg, harga: row.harga, buyer: row.buyer, catatan: row.catatan || '' });
         if (!editId && onJual)
             onJual(form.produk, kg, form.buyer);
         setModalOpen(false);
@@ -2490,7 +2492,7 @@ function PenjualanPage({ onJual }) {
         return d.sort((a, b) => b.tgl.localeCompare(a.tgl));
     }, [data, dr, filterProduk, search]);
     const totalKgJual = filtered.reduce((s, r) => s + r.kg, 0);
-    const totalNilai = filtered.reduce((s, r) => s + r.total, 0);
+    const totalNilai = filtered.reduce((s, r) => s + ((r.total != null && !isNaN(r.total)) ? r.total : (r.kg * r.harga) || 0), 0);
     const hariUnik = [...new Set(filtered.map(r => r.tgl))].length;
     const hasFilter = (dr.from !== MONTH_START || dr.to !== TODAY) || filterProduk !== "all" || search;
     // Rata-rata harga jual per kg (tertimbang berdasarkan kg)
@@ -3556,6 +3558,22 @@ function PenggajianPage({ absensiData, karyawanData }) {
     useEffect(() => {
         dbLoad('karyawan', d => setKaryawan(d.map(mapK)));
         dbLoad('absensi', setAbsensi);
+        // Load hutang & slip dari DB
+        const db2 = getDB();
+        if (!db2)
+            return;
+        db2.from('hutang_karyawan').select('*').then(({ data }) => {
+            if (data) {
+                const map = {};
+                data.forEach(h => { if (!map[h.karyawan_id])
+                    map[h.karyawan_id] = []; map[h.karyawan_id].push({ id: h.id, keterangan: h.keterangan, jumlahAwal: h.jumlah_awal, sisaHutang: h.sisa_hutang, tgl: h.tgl }); });
+                setHutangKaryawan(map);
+            }
+        });
+        db2.from('slip_gaji').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+            if (data)
+                setSlipList(data.map(r => (Object.assign(Object.assign({}, JSON.parse(r.data || '{}')), { id: r.id }))));
+        });
     }, []);
     // Juga sync dari props jika ada update
     useEffect(() => { if ((karyawanData === null || karyawanData === void 0 ? void 0 : karyawanData.length) > 0)
@@ -3658,6 +3676,11 @@ function PenggajianPage({ absensiData, karyawanData }) {
             detail: gajiCalc.detail,
         };
         setSlipList(s => [slip, ...s]);
+        // Simpan slip ke DB
+        const db3 = getDB();
+        if (db3)
+            db3.from('slip_gaji').upsert({ id: slip.id, data: JSON.stringify(slip) }).then(({ error }) => { if (error)
+                console.warn('slip save:', error.message); });
         // reset
         setTunjangan([]);
         setPotongan([]);
@@ -3978,21 +4001,7 @@ function PenggajianPage({ absensiData, karyawanData }) {
                                                     return Object.assign(Object.assign({}, hk), { [r.k.id]: updated });
                                                 });
                                             }
-                                            onClick: async () => {
-
-  const { error } = await window.db
-    .from('penggajian')
-    .update({ status: 'lunas' })
-    .eq('id', r.id)
-
-  if (error) {
-    alert(error.message)
-    return
-  }
-
-  setSudahBayar(s => ({ ...s, [bayarKey]: true }))
-  alert('✅ Berhasil tandai lunas')
-}
+                                            setSudahBayar(s => (Object.assign(Object.assign({}, s), { [bayarKey]: true })));
                                         } },
                                         React.createElement(Check, { size: 12 }),
                                         " Tandai Lunas"))));
@@ -4071,6 +4080,11 @@ function PenggajianPage({ absensiData, karyawanData }) {
                             const jml = Number(hkForm.jumlah);
                             const entry = { id: uid(), keterangan: hkForm.keterangan, jumlahAwal: jml, sisaHutang: jml, tgl: TODAY };
                             setHutangKaryawan(hk => (Object.assign(Object.assign({}, hk), { [k.id]: [...(hk[k.id] || []), entry] })));
+                            // Save to DB
+                            const db4 = getDB();
+                            if (db4)
+                                db4.from('hutang_karyawan').insert({ id: entry.id, karyawan_id: k.id, keterangan: entry.keterangan, jumlah_awal: jml, sisa_hutang: jml, tgl: TODAY }).then(({ error }) => { if (error)
+                                    console.warn('hutang save:', error.message); });
                             setHkModal(false);
                         }, disabled: !hkTarget || !hkForm.jumlah || !hkForm.keterangan },
                         React.createElement(Check, { size: 14 }),
@@ -4089,7 +4103,7 @@ function PenggajianPage({ absensiData, karyawanData }) {
                             karyawan.filter(k => k.status === "Aktif" || !k.status).map(k => React.createElement("option", { key: k.id, value: k.nama },
                                 k.nama,
                                 " (",
-                                k.tipeGaji === "bulanan" ? "Bulanan" : "Harian",
+                                k.tipeGaji === "bulanan" ? "(Bulanan)" : "(Harian)",
                                 ")")))),
                     React.createElement("div", null,
                         React.createElement("div", { style: { fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 4, textTransform: "uppercase" } }, "Nomor Slip Gaji"),
@@ -4286,7 +4300,7 @@ function SDMPage() {
             React.createElement("div", { style: { overflowX: "auto" } },
                 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13 } },
                     React.createElement("thead", null,
-                        React.createElement("tr", { style: { borderBottom: `2px solid ${C.border}` } }, ["Nama", "Jabatan", "Tgl Bergabung", "Gaji/Bulan", "Status", "Aksi"].map((h, i) => React.createElement("th", { key: i, style: { padding: "9px 12px", textAlign: "left", color: C.muted, fontWeight: 700, fontSize: 11, textTransform: "uppercase", whiteSpace: "nowrap" } }, h)))),
+                        React.createElement("tr", { style: { borderBottom: `2px solid ${C.border}` } }, ["Nama", "Jabatan", "Tgl Bergabung", "Gaji", "Status", "Aksi"].map((h, i) => React.createElement("th", { key: i, style: { padding: "9px 12px", textAlign: "left", color: C.muted, fontWeight: 700, fontSize: 11, textTransform: "uppercase", whiteSpace: "nowrap" } }, h)))),
                     React.createElement("tbody", null, filtered.map((k, ri) => (React.createElement("tr", { key: k.id, style: { borderBottom: `1px solid ${C.border}`, background: ri % 2 === 0 ? "#fff" : "#fafafa" } },
                         React.createElement("td", { style: { padding: "10px 12px" } },
                             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },
@@ -4342,7 +4356,7 @@ function SDMPage() {
 function AsetPage({ asetData, setAsetData }) {
     const [data, setDataLocal] = useState([]);
     useEffect(() => {
-        dbLoad('aset', d => { setDataLocal(d); setAsetData(d); });
+        dbLoad('aset', d => { const mapped = d.map(r => (Object.assign(Object.assign({}, r), { beli: r.beli || r.tgl_beli || '' }))); setDataLocal(mapped); setAsetData(mapped); });
     }, []);
     const { guard, GuardModal } = useGuard();
     const setData = d => {
@@ -6370,6 +6384,30 @@ function App() {
     const [loggedIn, setLoggedIn] = useState(false);
     const [user, setUser] = useState(null);
     const [active, setActive] = useState("dashboard");
+    const [sessionChecked, setSessionChecked] = useState(false);
+    // Restore session on refresh
+    useEffect(() => {
+        const db = getDB();
+        if (!db) {
+            setSessionChecked(true);
+            return;
+        }
+        db.auth.getSession().then(({ data: { session } }) => {
+            if (session === null || session === void 0 ? void 0 : session.user) {
+                db.from('users').select('nama,role').eq('email', session.user.email).single()
+                    .then(({ data: ud }) => {
+                    if (ud) {
+                        setUser({ role: ud.role, nama: ud.nama });
+                        setLoggedIn(true);
+                    }
+                    setSessionChecked(true);
+                });
+            }
+            else {
+                setSessionChecked(true);
+            }
+        });
+    }, []);
     // Shared aset list — kept at App level so AsetPage and MaintenancePage stay in sync
     const [sharedAset, setSharedAset] = useState([]);
     // Shared absensi & karyawan — kept at App level so Penggajian + Dashboard stay in sync
@@ -6463,13 +6501,37 @@ function App() {
     const _totalKaryawan = sharedKaryawan.length;
     // ── Budget mingguan ──
     const [budgetMingguan, setBudgetMingguan] = useState(100000000);
-    // ── Shared saldo kas — editable di Finance, tampil di Dashboard ──
     const [sharedSaldo, setSharedSaldo] = useState(125000000);
+    // Load persisted finance settings from DB
+    useEffect(() => {
+        if (!loggedIn)
+            return;
+        const db = getDB();
+        if (!db)
+            return;
+        db.from('finance_settings').select('*').single().then(({ data }) => {
+            if (data) {
+                if (data.saldo != null)
+                    setSharedSaldo(Number(data.saldo));
+                if (data.budget != null)
+                    setBudgetMingguan(Number(data.budget));
+            }
+        });
+        dbLoad('transaksi_kas', setSharedTransaksi);
+    }, [loggedIn]);
     // ── Shared transaksi kas — untuk Laporan Arus Kas Pendanaan ──
     const TX_INIT = [];
     const [sharedTransaksi, setSharedTransaksi] = useState(TX_INIT);
     const handleLogin = (role, name, loginTime) => { setUser({ role, name, loginTime }); setLoggedIn(true); setActive("dashboard"); };
+    // Wrap setters to persist to DB
+    const saveSaldo = (v) => { setSharedSaldo(v); const db2 = getDB(); if (db2)
+        db2.from('finance_settings').upsert({ id: 'main', saldo: v }, { onConflict: 'id' }).then(() => { }); };
+    const saveBudget = (v) => { setBudgetMingguan(v); const db2 = getDB(); if (db2)
+        db2.from('finance_settings').upsert({ id: 'main', budget: v }, { onConflict: 'id' }).then(() => { }); };
     const handleLogout = () => { setLoggedIn(false); setUser(null); };
+    if (!sessionChecked)
+        return React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0d3320' } },
+            React.createElement("div", { style: { color: '#a7f3d0', fontSize: 15 } }, "Memuat sesi..."));
     if (!loggedIn)
         return React.createElement(LoginPage, { onLogin: handleLogin });
     const pageMap = {
@@ -6500,7 +6562,7 @@ function App() {
                 });
                 dbLoad('bahan_baku', d => { const kg = d.reduce((s, r) => s + ((r.items || []).reduce((ss, it) => ss + (it.kg || 0), 0)), 0); setSharedStokBB(kb => kb); });
             } }),
-        finance: React.createElement(FinancePage, { role: user.role, budgetMingguan: budgetMingguan, setBudgetMingguan: setBudgetMingguan, sharedSaldo: sharedSaldo, setSharedSaldo: setSharedSaldo, sharedTransaksi: sharedTransaksi, setSharedTransaksi: setSharedTransaksi }),
+        finance: React.createElement(FinancePage, { role: user.role, budgetMingguan: budgetMingguan, setBudgetMingguan: saveBudget, sharedSaldo: sharedSaldo, setSharedSaldo: saveSaldo, sharedTransaksi: sharedTransaksi, setSharedTransaksi: setSharedTransaksi }),
         po: React.createElement(POPage, null),
         laporan: user.role === "direktur" ? React.createElement(LaporanPage, { transaksiKas: sharedTransaksi }) : null,
         sdm: React.createElement(SDMPage, null),
