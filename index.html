@@ -6397,7 +6397,7 @@ function App() {
                 db.from('users').select('nama,role').eq('email', session.user.email).single()
                     .then(({ data: ud }) => {
                     if (ud) {
-                        setUser({ role: ud.role, nama: ud.nama });
+                        setUser({ role: ud.role, name: ud.nama || "User" });
                         setLoggedIn(true);
                     }
                     setSessionChecked(true);
