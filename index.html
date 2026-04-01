@@ -6609,3 +6609,15 @@ try {
   document.getElementById('loading').innerHTML='<div style="color:#fca5a5;font-family:monospace;padding:24px;background:#0d1117;min-height:100vh"><b>JS Error:</b><br><br>'+e.message+'<br><br><small>'+e.stack+'</small></div>';
 }
 </script></body></html>
+const App = () => {
+  return React.createElement("div", null, "APP JALAN");
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  React.createElement(App)
+);
+try {
+  // your code
+} catch (err) {
+  document.body.innerHTML = '<pre style="color:red">' + err.stack + '</pre>';
+}
